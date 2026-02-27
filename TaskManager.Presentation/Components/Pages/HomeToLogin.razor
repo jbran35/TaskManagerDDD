@@ -1,0 +1,20 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+
+@code {
+
+    private bool _redirected;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_redirected)
+        {
+            _redirected = true;
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+}

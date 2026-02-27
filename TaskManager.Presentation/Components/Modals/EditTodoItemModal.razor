@@ -1,0 +1,83 @@
+﻿@using BlazorBootstrap
+@using TaskManager.Application.TodoItems.DTOs.Responses
+@using TaskManager.Presentation.Components.Pages
+@using TaskManager.Presentation.Enums
+
+
+
+@* Edit Modal *@
+
+<Modal @ref="editModal" Title="Edit Task" Size="ModalSize.Large">
+    <BodyTemplate>
+        <EditTask TaskId="@editModalGuid" @ref="_editTaskForm" 
+                  OnShowNewAssigneeModalClick="OnShowNewAssigneeModal"
+                  OnRestoreEditTodoItemModal="RestoreEditTodoItemModal"
+                  ProjectId="ProjectId"> </EditTask>
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideEditModalClick">Close</Button>
+        <Button Color="ButtonColor.Dark" @onclick="OnUpdateTaskModalClick" Disabled="IsSaveClicked" >Update</Button>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public EventCallback<UpdateTodoItemResponse> OnTodoItemUpdated { get; set; }
+    [Parameter] public EventCallback OnRestoreEditModalClick { get; set; }
+    [Parameter] public EventCallback<NewAssigneeCallingOriginEnum> OnShowNewAssigneeModalClick { get; set; }
+
+    private string todoName = string.Empty;
+    private Modal editModal = default!;
+    private EditTask _editTaskForm;
+    private Guid editModalGuid = Guid.Empty;
+    private bool IsSaveClicked = false;
+
+    public TodoItemModel model = new TodoItemModel();
+
+
+    public async Task OnShowEditModalClick(Guid todoItemId, string taskName)
+    {
+        todoName = taskName;
+        editModalGuid = todoItemId;
+
+        await editModal.ShowAsync();
+    }
+
+    public async Task OnHideEditModalClick()
+    {
+        await editModal.HideAsync();
+    }
+
+    private async Task OnUpdateTaskModalClick()
+    {
+
+        //  IsSaveClicked = true;
+        // await _addTaskForm.CreateTask();
+
+        // await addTaskModal.HideAsync();
+        // IsSaveClicked = false;
+        // await OnTodoItemCreated.InvokeAsync();
+
+
+        IsSaveClicked = true;
+        await _editTaskForm.UpdateTask();
+        await editModal.HideAsync();
+        IsSaveClicked = false;
+
+        await OnTodoItemUpdated.InvokeAsync();
+    }
+
+    public async Task OnShowNewAssigneeModal(TodoItemModel passedModel)
+    {
+        model = passedModel;
+
+        await OnShowNewAssigneeModalClick.InvokeAsync(NewAssigneeCallingOriginEnum.EditTodoItem);
+        await editModal.HideAsync();
+    }
+
+    public async Task RestoreEditTodoItemModal()
+    {
+        // await editModal.ShowAsync();
+        // _editTaskForm.RestoreForm(model, assigneeId);
+    }
+}
