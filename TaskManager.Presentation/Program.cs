@@ -41,10 +41,10 @@ builder.Services.AddScoped<CircuitHandler, CacheCleanupCircuitHandler>();
 builder.Services.AddHttpClient("API", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7109");
-//});
+    //});
 
-}).AddHttpMessageHandler<AuthHeaderHandler>()
-.SetHandlerLifetime(TimeSpan.FromSeconds(1)); 
+}).AddHttpMessageHandler<AuthHeaderHandler>();
+//.SetHandlerLifetime(TimeSpan.FromSeconds(1)); 
 
 //builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
 builder.Services.AddScoped<IIdentityService, IdentityService>();
