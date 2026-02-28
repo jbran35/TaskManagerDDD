@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
-using TaskManager.Application.DTOs;
-using TaskManager.Application.DTOs.Requests;
 using TaskManager.Application.Interfaces;
 using TaskManager.Application.Users.DTOs.Requests;
 
@@ -10,10 +8,11 @@ namespace TaskManager.Presentation.Services
 {
     public class IdentityService (IHttpContextAccessor httpContextAccessor): IIdentityService
     {
-        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor; 
-
+        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         public async Task RefreshUserClaimsAsync(UpdateProfileRequest request)
         {
+            Console.WriteLine("\n \n IN IDENTITY SERVICE REFRESH USER CLAIMS \n");
+
             var context = _httpContextAccessor.HttpContext;
 
             if (context is null) return;
@@ -44,6 +43,7 @@ namespace TaskManager.Presentation.Services
             await context.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(claimsIdentity),
+
             new AuthenticationProperties
             {
                 IsPersistent = true,

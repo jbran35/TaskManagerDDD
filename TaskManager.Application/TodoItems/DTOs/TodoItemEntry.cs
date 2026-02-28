@@ -5,7 +5,7 @@ namespace TaskManager.Application.TodoItems.DTOs
 {
     public record TodoItemEntry : ITodoItemEntry
     {
-        //Id, Title, ProjectTitle, AssigneeName, OwnerName, Priority, DueDate, CreatedOn, Status
+        //Id, AssigneeId, OwnerId, Title, Description, ProjectTitle, AssigneeName, OwnerName, Priority, DueDate, CreatedOn, Status
         public Guid Id { get; set; }
         public Guid? AssigneeId { get; set; }
         public Guid OwnerId { get; set; }

@@ -52,7 +52,7 @@
 
         if (response is not null && result is not null && response.IsSuccessStatusCode)
         {
-            ProjectStateService.RemoveFromCache(result.ProjectId);
+            ProjectStateService.RemoveProject(result.ProjectId);
             await OnProjectDeleted.InvokeAsync(result);
         }
         else if (response is not null && !response.IsSuccessStatusCode)

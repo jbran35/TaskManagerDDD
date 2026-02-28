@@ -94,6 +94,8 @@ namespace TaskManager.API.Controllers
             //Validate user identity
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            Console.WriteLine(User.FindFirstValue(ClaimTypes.Name + "IS REQUESTING PROJECTS"));
+
             if (string.IsNullOrEmpty(userIdString))
             {
                 return Unauthorized(new { Message = "User ID not found in token" });
@@ -167,6 +169,11 @@ namespace TaskManager.API.Controllers
             }
 
             var userId = Guid.Parse(userIdString);
+
+            var usersName = User.FindFirstValue(ClaimTypes.Name);
+
+            Console.WriteLine("IN GET PROJECTS ENDPOINT, Sending: " + usersName);
+
 
             var command = new GetUserProjectsQuery(userId);
 

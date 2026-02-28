@@ -13,7 +13,7 @@
 @inject HttpClient Http
 @inject NavigationManager NavManager
 @inject AssignedTodoItemsStateService AssignedTodoItemsStateService
-@inject TodoItemStateService TodoItemStateService
+@inject SignalRConnectionService SignalRConnectionService
 
 
 @rendermode InteractiveServer
@@ -124,8 +124,8 @@ else
     <Paginator State="pagination" />
     
     <TodoItemDetailsModal @ref="detailsModal" isOwner="false"> </TodoItemDetailsModal>
-    <div class="alert @(TodoItemStateService.IsConnected ? "alert-success" : "alert-danger")">
-        SignalR Status: @TodoItemStateService.HubState
+    <div class="alert @(SignalRConnectionService.IsConnected ? "alert-success" : "alert-danger")">
+        SignalR Status: @SignalRConnectionService.HubState
     </div>
 
 
@@ -135,22 +135,23 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-       
-        await TodoItemStateService.EnsureConnectedAsync();
-
-        TodoItemStateService.OnStateChanged += HandleStateChanged;
-
-        Console.WriteLine("In OnIniitalizedAsync()");
+        SignalRConnectionService.OnTaskUpdated += HandleStateChanged;
+        await SignalRConnectionService.InitializeConnection();
         await LoadMyTasks();
-
-
-
     }
 
-    private void HandleStateChanged()
+    private async void HandleStateChanged()
     {
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(async () =>
+        {
+            AssignedTodoItemsStateService.Clear();
+            await LoadMyTasks(); 
+            StateHasChanged();   
+        });
     }
+    //     await LoadMyTasks();
+    //     StateHasChanged();
+    // }
 
     // private async void HandleTodoItemUpdate()
     // {
@@ -161,9 +162,9 @@ else
     //     });
     // }
 
-    public void Dispose()
+    public async Task Dispose()
     {
-        TodoItemStateService.OnStateChanged -= StateHasChanged;
+        SignalRConnectionService.OnTaskUpdated -= HandleStateChanged;
     }
 
     private string taskFilter = string.Empty;

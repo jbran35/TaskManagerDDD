@@ -253,7 +253,7 @@ else if (!string.IsNullOrEmpty(errorMessage))
                 Description = projectDescription
             };
 
-            ProjectStateService.SetProjectBasicDetailsInCache(newCachedDetails);
+            ProjectStateService.SetProjectBasicDetails(newCachedDetails);
         }
 
         StateHasChanged();
@@ -314,7 +314,7 @@ else if (!string.IsNullOrEmpty(errorMessage))
 
     private async Task OnUpdateTodoItemClick()
     {
-        taskList = ProjectStateService.GetProjectTodoItemsFromCache(ProjectId);
+        taskList = ProjectStateService.GetProjectTodoItems(ProjectId);
 
         if (taskList is not null)
         {
@@ -331,7 +331,7 @@ else if (!string.IsNullOrEmpty(errorMessage))
 
     private async Task OnTodoItemCreated()
     {
-        taskList = ProjectStateService.GetProjectTodoItemsFromCache(ProjectId);
+        taskList = ProjectStateService.GetProjectTodoItems(ProjectId);
 
         if (taskList is not null)
             tasks = taskList.AsQueryable();
@@ -365,7 +365,7 @@ else if (!string.IsNullOrEmpty(errorMessage))
     {
         if (taskList is not null)
         {
-            taskList = ProjectStateService.GetProjectTodoItemsFromCache(ProjectId);
+            taskList = ProjectStateService.GetProjectTodoItems(ProjectId);
             if(taskList is not null)
                 tasks = taskList.AsQueryable();
 
@@ -483,7 +483,7 @@ else if (!string.IsNullOrEmpty(errorMessage))
                 if (projectDetails is not null)
                 {
                     RefreshProjectDetails(projectDetails);
-                    ProjectStateService.SetAllProjectDetailsInCache(projectDetails);
+                    ProjectStateService.SetAllProjectDetails(projectDetails);
                 }
             }
         }

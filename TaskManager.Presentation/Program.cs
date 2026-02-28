@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
@@ -21,25 +22,31 @@ builder.Services.AddSignalR();
 
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
 builder.Services.AddTransient<AuthHeaderHandler>();
-builder.Services.AddScoped<CookieHandler>();
+builder.Services.AddTransient<CookieHandler>();
 builder.Services.AddScoped<AssignedTodoItemsStateService>();
 builder.Services.AddScoped<ProjectStateService>();
 builder.Services.AddScoped<AssigneeListStateService>();
 builder.Services.AddScoped<ProjectSortStateService>(); 
 builder.Services.AddScoped<TodoItemDraftStateService>();
-builder.Services.AddScoped<TodoItemStateService>();
-builder.Services.AddScoped<AssignedTodoItemsStateService>();
+builder.Services.AddScoped<TokenProviderService>();
+builder.Services.AddScoped<SignalRConnectionService>();
+builder.Services.AddScoped<CircuitHandler, CacheCleanupCircuitHandler>();
+
+
 
 
 
 builder.Services.AddHttpClient("API", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7109");
+//});
 
-}).AddHttpMessageHandler<AuthHeaderHandler>();
+}).AddHttpMessageHandler<AuthHeaderHandler>()
+.SetHandlerLifetime(TimeSpan.FromSeconds(1)); 
 
-builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
+//builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 
@@ -48,8 +55,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/login";
         options.Cookie.Name = "BlazorAuth";
+        options.LogoutPath = "/logout";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
+
     });
 
 

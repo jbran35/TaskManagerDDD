@@ -150,7 +150,7 @@ namespace TaskManager.API.Controllers
 
             var result = await _mediator.Send(command);
 
-            await hubContext.Clients.All.SendAsync("TodoItem Updated Successful (hub context)"); 
+            //await hubContext.Clients.All.SendAsync("TodoItem Updated Successful (hub context)"); 
 
             return result.IsSuccess ? Ok(result.Value) : BadRequest(result.ErrorMessage);
 

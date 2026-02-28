@@ -61,7 +61,7 @@
 
         else if(response.IsSuccessStatusCode)
         {
-            ProjectStateService.RemoveTodoItemFromCache(ProjectId, TodoItemId);
+            ProjectStateService.RemoveTodoItem(ProjectId, TodoItemId);
         }
 
         await deleteModal.HideAsync();

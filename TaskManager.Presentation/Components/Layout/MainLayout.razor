@@ -3,8 +3,11 @@
 @using TaskManager.Presentation.Components
 @using TaskManager.Presentation.Components.Modals
 @using System.Security.Claims
+@using TaskManager.Presentation.Services
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthStateProvider
+@inject TokenProviderService TokenProviderService
+@inject IHttpContextAccessor HttpContextAccessor
 
 <div class="page">
     <main>
@@ -106,6 +109,19 @@
 
 @code {
 
+    protected override void OnInitialized()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+    
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            TokenProviderService.Token = user.FindFirstValue("jwt_token");
+            TokenProviderService.UserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            TokenProviderService.UserName = user.Identity.Name;
+        }
+        
+    }
+
   
     List<ToastMessage> messages = new();
 
@@ -124,10 +140,6 @@
 
 
     // EditProfileModal editProfileModal = default!;
-
-
-
-
 
     private async Task OnShowEditProfileModal()
     {

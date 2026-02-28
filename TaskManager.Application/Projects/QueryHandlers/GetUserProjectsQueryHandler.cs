@@ -21,18 +21,27 @@ namespace TaskManager.Application.Projects.QueryHandlers
             //Check Cache
             string key = $"projects_{request.UserId}";
 
+            Console.WriteLine("KEY BEING USED TO GET PROJECTS: " + key);
+
             var cachedProjects = await _cache.GetStringAsync(key, cancellationToken);
 
             if (!string.IsNullOrEmpty(cachedProjects))
             {
                 Console.WriteLine(" \n PULLING FROM REDIS CACHE");
                 var projects = JsonSerializer.Deserialize<List<ProjectTileDto>>(cachedProjects);
+
+                foreach(var proj in projects)
+                {
+                    Console.WriteLine(proj.Title);
+                }
+
                 return Result<List<ProjectTileDto>>.Success(projects!);
             }
 
 
             //Validate projects list
-            var projectTiles = await unitOfWork.ProjectRepository.GetAllProjectsByOwnerIdAsync(request.UserId, cancellationToken);
+            var projectTiles = await unitOfWork.ProjectRepository
+                .GetAllProjectsByOwnerIdAsync(request.UserId, cancellationToken);
 
             if (projectTiles is null)
                 return Result<List<ProjectTileDto>>.Failure("Issue Loading Projects");

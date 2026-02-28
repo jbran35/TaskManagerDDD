@@ -2,6 +2,6 @@
 {
     public interface ITodoItemUpdateNotificationService
     {
-        Task NotifyTodoItemUpdated();
+        Task NotifyTodoItemUpdated(string id);
     }
 }

@@ -183,7 +183,7 @@
         }
 
         ToastService.Notify(new(ToastType.Success, "Task Created Successfully!"));
-        ProjectStateService.AddTaskToProjectCache(ProjectId, result);
+        ProjectStateService.SetTodoItemInProject(ProjectId, result);
     }
 
     public void RestoreForm()

@@ -53,7 +53,7 @@
 
         else if (response.IsSuccessStatusCode)
         {
-            ProjectStateService.SetProjectTileDetailsInCache(result.ProjectTile);
+            ProjectStateService.SetProjectTile(result.ProjectTile);
             ToastService.Notify(new(ToastType.Success, "Project Successfully Completed!"));
 
             await OnProjectCompleted.InvokeAsync(result);

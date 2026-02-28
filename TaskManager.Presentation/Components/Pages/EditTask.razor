@@ -2,6 +2,7 @@
 @inject NavigationManager NavigationManager
 @inject ProjectStateService ProjectStateService
 @inject TodoItemDraftStateService TodoItemDraftStateService
+@inject SignalRConnectionService SignalRConnectionService
 
 
 @* @inject AssigneeListStateService AssigneeListStateService *@
@@ -229,7 +230,7 @@
         if (result is not null)
         {
             ToastService.Notify(new(ToastType.Success, "Task Updated Successfully!"));
-            ProjectStateService.AddTaskToProjectCache(ProjectId, result);
+            ProjectStateService.SetTodoItemInProject(ProjectId, result);
 
             var updatedItem = ProjectStateService.GetTodoItem(ProjectId, result.Id);
 

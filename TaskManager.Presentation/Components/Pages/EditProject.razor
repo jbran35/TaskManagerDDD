@@ -1,7 +1,6 @@
 ﻿@inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject ProjectStateService ProjectStateService
-@inject TodoItemStateService TodoItemStateService
 
 
 @page "/edit/{ProjectId:guid}"
@@ -78,7 +77,7 @@
 
     public async Task LoadProject()
     {
-        var cachedDetails = ProjectStateService.GetProjectBasicDetailsFromCache(ProjectId);
+        var cachedDetails = ProjectStateService.GetProjectBasicDetails(ProjectId);
 
 
         if (cachedDetails is not null && cachedDetails.Title is not null && cachedDetails.Description is not null)
@@ -96,8 +95,7 @@
 
             if (result is not null)
             {
-
-                ProjectStateService.SetProjectBasicDetailsInCache(result); 
+                ProjectStateService.SetProjectBasicDetails(result); 
 
                 model.Title = result.Title.ToString();
 
@@ -141,7 +139,7 @@
 
             if (successResult is not null)
             {
-                ProjectStateService.SetProjectBasicDetailsInCache(successResult);
+                ProjectStateService.SetProjectBasicDetails(successResult);
                 return successResult;
             }
         }

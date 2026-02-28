@@ -114,16 +114,21 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            // Check if the token is in the Authorization header first
-            var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
-            if (string.IsNullOrEmpty(authHeader))
+            var accessToken = context.Request.Query["access_token"];
+
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/taskhub"))
             {
-                // If not in header, check the cookie
-                if (context.Request.Cookies.TryGetValue("authToken", out var token))
-                {
-                    context.Token = token;
-                }
+                Console.WriteLine("\n \n Made it to /taskhub condiditional for authentication \n \n");
+                context.Token = accessToken;
             }
+
+            else if (context.Request.Cookies.TryGetValue("authToken", out var token))
+            {
+                Console.WriteLine("\\n \n In cookie auth section \n \n");
+                context.Token = token;
+            }
+          
             return Task.CompletedTask;
         }
     };

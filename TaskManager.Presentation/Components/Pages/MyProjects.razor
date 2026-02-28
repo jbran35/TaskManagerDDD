@@ -12,13 +12,14 @@
 @using System.Linq
 
 
-@inject HttpClient Http
+@inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavManager
 @inject ProjectStateService ProjectStateService
 @inject ProjectSortStateService ProjectSortStateService
-@inject TodoItemStateService TodoItemStateService
 
-@rendermode InteractiveServer
+@* @rendermode InteractiveServer *@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
 
 
 <PageTitle>My Projects</PageTitle>
@@ -165,7 +166,7 @@ else
         {
             Console.WriteLine(" \n Caching new project: " + response.CreatedProject);
             ToastService.Notify(new(ToastType.Success,"Project Created Successfully"));
-            ProjectStateService.SetProjectTileDetailsInCache(response.CreatedProject);
+            ProjectStateService.SetProjectTile(response.CreatedProject);
 
             projectsList.Add(response.CreatedProject);
             projects = projectsList.AsQueryable();
@@ -187,7 +188,7 @@ else
 
         if (result is not null && result.Id != Guid.Empty)
         {
-            ProjectStateService.RemoveFromCache(result.Id);
+            ProjectStateService.RemoveProject(result.Id);
             ToastService.Notify(new(ToastType.Success, "Project Deleted Successfully!"));
 
             if (projectsList is not null)
@@ -252,14 +253,16 @@ else
     private string projectFilter = string.Empty;
     PaginationState pagination = new PaginationState { ItemsPerPage = 5 };
     private IQueryable<ProjectTileDto>? projects;
-    private List<ProjectTileDto>? projectsList; 
+    private List<ProjectTileDto>? projectsList = new(); 
     private bool isLoading = true;
     private string Message = string.Empty;
+    private bool hasLoaded = false;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+
             await LoadProjects();
             // var sortOption = ProjectSortStateService.GetSortingMethod();
 
@@ -278,10 +281,15 @@ else
 
     private async Task LoadProjects()
     {
+        if(hasLoaded) return;
+
+        hasLoaded = true;
+
+        Console.WriteLine("\n IN LOAD PROJECTS \n");
         errorMessage = string.Empty;
 
         //Load Projects from cache
-        var projTiles = ProjectStateService.GetProjectTiles();
+        var projTiles = ProjectStateService.GetUserProjectTiles();
 
         //If projects in cache - load tiles
         if (projTiles is not null && projTiles.Any() && projectsList is not null)
@@ -294,7 +302,6 @@ else
             }
 
             projects = projectsList.AsQueryable();
-            StateHasChanged();
             isLoading = false;
             return;
         }
@@ -307,7 +314,9 @@ else
             // PreloadService.Show(SpinnerColor.Dark, "Loading projects...");
             Console.WriteLine("\n Loading projects from API... \n");
 
-            var response = await Http.GetAsync("api/projects/MyProjects");
+            var client = ClientFactory.CreateClient("API");
+
+            var response = await client.GetAsync("api/projects/MyProjects");
 
             if (response is null)
             {
@@ -326,9 +335,11 @@ else
 
                    // ProjectStateService.SetProjectTilesInCache(result.UserProjectTiles);
 
-                    projectsList = result;
+                   ProjectStateService.SetProjectTiles(result); 
 
-                    projects = projectsList.AsQueryable(); 
+                   projectsList = result;
+
+                   projects = projectsList.AsQueryable(); 
                 }
               
 

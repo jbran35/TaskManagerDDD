@@ -71,7 +71,7 @@ namespace TaskManager.Application.TodoItems.CommandHandlers
                     Status = todoItem.Status
                 };
 
-                await _updateService.NotifyTodoItemUpdated();
+                await _updateService.NotifyTodoItemUpdated(todoItem.AssigneeId.ToString());
 
                 return Result<TodoItemEntry>.Success(listEntryDto);
             }

@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Distributed;
 using TaskManager.Application.Interfaces;
 using TaskManager.Application.TodoItems.Commands;
 using TaskManager.Application.TodoItems.DTOs;
@@ -12,7 +13,7 @@ using TaskManager.Domain.ValueObjects;
 namespace TaskManager.Application.TodoItems.CommandHandlers
 {
     public class UpdateTodoItemCommandHandler(IUnitOfWork unitOfWork, UserManager<User> userManager, 
-        ITodoItemUpdateNotificationService updateNotificationService) : IRequestHandler<UpdateTodoItemCommand, Result<TodoItemEntry>>
+        ITodoItemUpdateNotificationService updateNotificationService, IDistributedCache _cache) : IRequestHandler<UpdateTodoItemCommand, Result<TodoItemEntry>>
     {
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
         private readonly UserManager<User> _userManager = userManager;
@@ -40,6 +41,26 @@ namespace TaskManager.Application.TodoItems.CommandHandlers
 
             if (todoItem is null || todoItem.OwnerId != user.Id || todoItem.ProjectId != project.Id)
                 return Result<TodoItemEntry>.Failure("Task Not Found");
+
+            //Check if assignee exists - if so, clear their assignee's cached assigned items
+
+            string key = $"assigned_tasks_";
+            bool sendRefreshNotification = false;
+
+            if (todoItem.AssigneeId != Guid.Empty && todoItem.AssigneeId is not null)
+            {
+               
+                var idString = todoItem.AssigneeId.ToString() ?? string.Empty;
+
+                var assignee = await _userManager.FindByIdAsync(idString);
+
+                if (assignee is not null)
+                {
+                    Console.WriteLine("\n \n SETTING SENDREFRESHNOTIFICATION TO TRUE \n \n");
+                    key = key + assignee.Id;
+                    sendRefreshNotification = true;
+                }
+            }
 
 
             //Update properties if they are provided in the request
@@ -105,7 +126,17 @@ namespace TaskManager.Application.TodoItems.CommandHandlers
                     Status = todoItem.Status
                 };
 
-                await _updateNotificationService.NotifyTodoItemUpdated();
+                if (todoItem.AssigneeId.ToString() is not null)
+                {
+                    await _updateNotificationService.NotifyTodoItemUpdated(todoItem.AssigneeId.ToString());
+                }
+
+                if (sendRefreshNotification)
+                {
+                    Console.WriteLine("\n \n CLEARING ASSIGNEES CACHED ITEMS \n \n");
+                    _cache.Remove(key); ;
+
+                }
 
                 return Result<TodoItemEntry>.Success(listEntryDto);
             }
