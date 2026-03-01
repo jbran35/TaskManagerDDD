@@ -1,23 +1,26 @@
-﻿using System.Net.Http.Headers;
-using System.Security.Claims;
-using TaskManager.Presentation.Services;
+﻿using Microsoft.AspNetCore.Components.Authorization;
+using System.Net.Http.Headers;
 
-namespace TaskManager.Presentation
+public class AuthHeaderHandler : DelegatingHandler
 {
-    public class AuthHeaderHandler(TokenProviderService tokenProvider) : DelegatingHandler
+    private readonly AuthenticationStateProvider _authStateProvider;
+
+    public AuthHeaderHandler(AuthenticationStateProvider authStateProvider)
     {
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        _authStateProvider = authStateProvider;
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var authState = await _authStateProvider.GetAuthenticationStateAsync();
+        var token = authState.User.FindFirst("jwt_token")?.Value;
+
+
+        if (!string.IsNullOrEmpty(token))
         {
-            var token = tokenProvider.Token; 
-
-            if (!string.IsNullOrEmpty(token))
-            {
-
-                Console.WriteLine("String is not null or empty");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            return await base.SendAsync(request, cancellationToken);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
+
+        return await base.SendAsync(request, cancellationToken);
     }
 }

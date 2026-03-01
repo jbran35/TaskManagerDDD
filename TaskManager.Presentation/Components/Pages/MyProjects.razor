@@ -1,6 +1,7 @@
 ﻿@page "/myprojects"
 
 @using BlazorBootstrap
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using TaskManager.Application.Projects.DTOs
@@ -12,10 +13,12 @@
 @using System.Linq
 
 
-@inject IHttpClientFactory ClientFactory
+@inject ApiClientService ApiClientService
 @inject NavigationManager NavManager
 @inject ProjectStateService ProjectStateService
 @inject ProjectSortStateService ProjectSortStateService
+@inject AuthenticationStateProvider AuthenticationProvider
+
 
 @* @rendermode InteractiveServer *@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
@@ -260,6 +263,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+
+        var authState = await AuthenticationProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            await LoadProjects();
+        }
+
         try
         {
 
@@ -285,6 +295,7 @@ else
 
         hasLoaded = true;
 
+
         Console.WriteLine("\n IN LOAD PROJECTS \n");
         errorMessage = string.Empty;
 
@@ -306,76 +317,77 @@ else
             return;
         }
 
-
-        //If cache is null or empty > Call API to get projects > Save projects to cache
-        // Add to ProjectsList and Projects IQueryable for display.
-        try
-        {
-            // PreloadService.Show(SpinnerColor.Dark, "Loading projects...");
-            Console.WriteLine("\n Loading projects from API... \n");
-
-            var client = ClientFactory.CreateClient("API");
-
-            var response = await client.GetAsync("api/projects/MyProjects");
-
-            if (response is null)
+            //If cache is null or empty > Call API to get projects > Save projects to cache
+            // Add to ProjectsList and Projects IQueryable for display.
+            try
             {
-                //ToastService.Notify(new(ToastType.Danger, "Unexpected Error Retrieving Projects"));
-                return;
-            }
+                // PreloadService.Show(SpinnerColor.Dark, "Loading projects...");
+                Console.WriteLine("\n Loading projects from API... \n");
 
-            //If query was successfull - put project tiles in ProjectsList and set as queryable.
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<System.Collections.Generic.List<ProjectTileDto>>();
+                var client = ApiClientService.GetClient();
 
-                if (result is not null)
+                var response = await client.GetAsync("api/projects/MyProjects");
+
+                if (response is null)
                 {
-                    //ToastService.Notify(new(ToastType.Success, "Welcome!"));
-
-                   // ProjectStateService.SetProjectTilesInCache(result.UserProjectTiles);
-
-                   ProjectStateService.SetProjectTiles(result); 
-
-                   projectsList = result;
-
-                   projects = projectsList.AsQueryable(); 
+                    //ToastService.Notify(new(ToastType.Danger, "Unexpected Error Retrieving Projects"));
+                    return;
                 }
-              
 
+                //If query was successfull - put project tiles in ProjectsList and set as queryable.
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<System.Collections.Generic.List<ProjectTileDto>>();
+
+                    if (result is not null)
+                    {
+                        //ToastService.Notify(new(ToastType.Success, "Welcome!"));
+
+                        // ProjectStateService.SetProjectTilesInCache(result.UserProjectTiles);
+
+                        ProjectStateService.SetProjectTiles(result);
+
+                        projectsList = result;
+
+                        projects = projectsList.AsQueryable();
+                    }
+
+
+                    else
+                    {
+                        errorMessage = await response.Content.ReadAsStringAsync();
+                        //ToastService.Notify(new(ToastType.Danger, errorMessage));
+                    }
+                }
+
+                //If unauthorized attempt to load projects
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    errorMessage = "Not authorized. Please log in.";
+                    //ToastService.Notify(new(ToastType.Danger, errorMessage));
+                    await InvokeAsync(() => NavManager.NavigateTo("/login"));
+                    return;
+                }
+
+                //General error
                 else
                 {
-                    errorMessage = await response.Content.ReadAsStringAsync();
+                    errorMessage = $"API returned status code: {response.StatusCode}";
                     //ToastService.Notify(new(ToastType.Danger, errorMessage));
                 }
             }
 
-            //If unauthorized attempt to load projects
-            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            catch (Exception ex)
             {
-                errorMessage = "Not authorized. Please log in."; 
-                //ToastService.Notify(new(ToastType.Danger, errorMessage));
-                await InvokeAsync(() => NavManager.NavigateTo("/login"));
-                return;
-            }
-
-            //General error
-            else
-            {
-                errorMessage = $"API returned status code: {response.StatusCode}";
+                errorMessage = $"Error: {ex.Message}";
                 //ToastService.Notify(new(ToastType.Danger, errorMessage));
             }
-        }
 
-        catch (Exception ex)
-        {
-            errorMessage = $"Error: {ex.Message}";
-            //ToastService.Notify(new(ToastType.Danger, errorMessage));
-        }
+            finally
+            {
+                isLoading = false;
+            }
 
-        finally
-        {
-            isLoading = false;
-        }
+        
     }
 }

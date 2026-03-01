@@ -18,7 +18,7 @@
 @using TaskManager.Presentation.Enums
 
 
-@inject HttpClient Http
+@inject ApiClientService ApiClientService
 @inject NavigationManager NavManager
 @inject IJSRuntime JSRuntime
 @inject ProjectStateService ProjectStateService
@@ -410,7 +410,8 @@ else if (!string.IsNullOrEmpty(errorMessage))
 
     private async Task UpdateTodoItemStatus (Guid todoItemId)
     {
-        var response = await Http.PatchAsync($"api/todoitems/UpdateStatus/{todoItemId}", null);
+        var client = ApiClientService.GetClient();
+        var response = await client.PatchAsync($"api/todoitems/UpdateStatus/{todoItemId}", null);
 
         if (!response.IsSuccessStatusCode) return;
 
@@ -475,7 +476,10 @@ else if (!string.IsNullOrEmpty(errorMessage))
         //Check that the project is in cache > If TodoItemList is null - it hasn't been pulled from API > If Empty - has been pulled but there are no TodoItems.
         if (projectDetails is null || !projectDetails.IsComplete || projectDetails.TodoItems is null || projectDetails.IsExpired)
         {
-            var response = await Http.GetAsync("api/projects/" + ProjectId.ToString() + "/tasks");
+
+            var client = ApiClientService.GetClient();
+
+            var response = await client.GetAsync("api/projects/" + ProjectId.ToString() + "/tasks");
             if (response is not null && response.IsSuccessStatusCode)
             {
                 var projectDetails = await response.Content.ReadFromJsonAsync<ProjectDetailedViewDto>();

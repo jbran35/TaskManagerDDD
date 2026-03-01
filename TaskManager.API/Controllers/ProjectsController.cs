@@ -160,6 +160,7 @@ namespace TaskManager.API.Controllers
         [HttpGet("MyProjects")]
         public async Task<ActionResult<List<ProjectTileDto>>> GetUserProjects()
         {
+            Console.WriteLine("\n IN MY PROJECTS ENDPOINT \n ");
             //Validate user identity
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -172,7 +173,7 @@ namespace TaskManager.API.Controllers
 
             var usersName = User.FindFirstValue(ClaimTypes.Name);
 
-            Console.WriteLine("IN GET PROJECTS ENDPOINT, Sending: " + usersName);
+            Console.WriteLine("\n IN GET PROJECTS ENDPOINT, Sending: " + usersName + "\n");
 
 
             var command = new GetUserProjectsQuery(userId);

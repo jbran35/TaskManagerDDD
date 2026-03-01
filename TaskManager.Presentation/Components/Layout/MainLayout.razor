@@ -116,8 +116,8 @@
         if (user?.Identity?.IsAuthenticated == true)
         {
             TokenProviderService.Token = user.FindFirstValue("jwt_token");
-            TokenProviderService.UserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-            TokenProviderService.UserName = user.Identity.Name;
+            // TokenProviderService.UserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            // TokenProviderService.UserName = user.Identity.Name;
         }
         
     }

@@ -10,7 +10,7 @@
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using TaskManager.Presentation.Services
 
-@inject HttpClient Http
+@inject ApiClientService ApiClientService
 @inject NavigationManager NavManager
 @inject AssignedTodoItemsStateService AssignedTodoItemsStateService
 @inject SignalRConnectionService SignalRConnectionService
@@ -245,7 +245,9 @@ else
            
         try
         {
-            var response = await Http.GetAsync("api/todoitems/MyAssignedTasks");
+            var client = ApiClientService.GetClient();
+
+            var response = await client.GetAsync("api/todoitems/MyAssignedTasks");
 
             // if (response is null)
             //     ToastService.Notify(new(ToastType.Danger, "Unexpected Error Retrieving Tasks!"));

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -24,7 +25,6 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddTransient<AuthHeaderHandler>();
-builder.Services.AddTransient<CookieHandler>();
 builder.Services.AddScoped<AssignedTodoItemsStateService>();
 builder.Services.AddScoped<ProjectStateService>();
 builder.Services.AddScoped<AssigneeListStateService>();
@@ -32,10 +32,15 @@ builder.Services.AddScoped<ProjectSortStateService>();
 builder.Services.AddScoped<TodoItemDraftStateService>();
 builder.Services.AddScoped<TokenProviderService>();
 builder.Services.AddScoped<SignalRConnectionService>();
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<CircuitHandler, CacheCleanupCircuitHandler>();
 
 
 
+builder.Services.AddHttpClient("PublicAPI", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7109");
+});
 
 
 builder.Services.AddHttpClient("API", client =>
@@ -46,13 +51,33 @@ builder.Services.AddHttpClient("API", client =>
 }).AddHttpMessageHandler<AuthHeaderHandler>();
 //.SetHandlerLifetime(TimeSpan.FromSeconds(1)); 
 
-//builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
-builder.Services.AddScoped<IIdentityService, IdentityService>();
 
+builder.Services.AddScoped<ApiClientService>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var authProvider = sp.GetRequiredService<AuthenticationStateProvider>();
+
+    var authHandler = new AuthHeaderHandler(authProvider);
+
+    authHandler.InnerHandler = new HttpClientHandler();
+
+    var baseClient = factory.CreateClient("API");
+
+    var authenticatedClient = new HttpClient(authHandler)
+    {
+        BaseAddress = baseClient.BaseAddress
+    };
+
+    return new ApiClientService(authenticatedClient);
+});
+
+
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
+
         options.LoginPath = "/login";
         options.Cookie.Name = "BlazorAuth";
         options.LogoutPath = "/logout";
@@ -63,7 +88,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 
 builder.Services.AddAuthorizationCore();
-builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
@@ -95,8 +119,8 @@ app.Use(async (context, next) =>
 app.MapPost("/account/login", async (HttpContext context, [FromForm] string username, [FromForm] string password, IHttpClientFactory clientFactory) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    var client = clientFactory.CreateClient("PublicAPI");
 
-    var client = clientFactory.CreateClient("API");
 
     var response = await client.PostAsJsonAsync("api/account/login", new { Username = username, Password = password });
 
